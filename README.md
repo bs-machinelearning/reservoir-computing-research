@@ -1,5 +1,16 @@
-Setup:
-- Make sure git, 
+Required programs:
+- _git_ and _uv_, _VScode_
+- VScode's _tinymist_ extension
+- Recommended: `git-graph`, `Markdown Preview Enhanced`
+
+For setup:
+- Run `uv sync`
+- Create a new `Name_Surname.ipynb` file
+- Set the kernel of the jupyter notebook
+- Make sure the code blocks run
+- Commit and push the changes
+
+---
 
 Some references
 - A similar study showing an important error, as it does not control for network sizes. https://
