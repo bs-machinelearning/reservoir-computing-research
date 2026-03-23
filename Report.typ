@@ -32,7 +32,7 @@
         *Kevin Cesenj*
       ],   
       [
-        *Christina Christodoulou*
+        *Christina Eirini Christodoulou*
       ],
       [
         *Giusi Cozzi*
