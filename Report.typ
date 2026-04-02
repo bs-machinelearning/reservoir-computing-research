@@ -68,3 +68,15 @@
 ]
 
 #set heading(numbering: "1.a.")
+
+= Mathematical Foundation
+
+
+
+= Recurrent Model
+
+
+
+= Human Connectome Networks
+
+
