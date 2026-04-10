@@ -1,2 +1,5 @@
 .DS_Store
-data/**
+/data/
+/.jupyter/
+.ipynb_checkpoints/
+.virtual_documents/
