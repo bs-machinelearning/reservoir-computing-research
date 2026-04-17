@@ -56,8 +56,8 @@ def plot_lorenz_3d(R, W_out, y_true):
     Y_pred = R @ W_out
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
-    ax.plot(*y_true.T, lw=0.8, color="black", label="true")
-    ax.plot(*Y_pred.T, lw=1.3, color="tomato", linestyle="--", label="predicted")
+    ax.plot(*y_true.T, lw=0.2, color="black", label="true")
+    ax.plot(*Y_pred.T, lw=1.8, color="tomato", linestyle="--", label="pred")
     ax.set(xlabel="x", ylabel="y", zlabel="z", title="Lorenz attractor: true vs predicted")
     ax.legend()
     plt.show()
