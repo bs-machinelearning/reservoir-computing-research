@@ -32,8 +32,8 @@ def setup_reservoir(
     file_path,
     J=0.9,
     lambda_reg=3e-6,
-    t_thermalization=40,
-    t_training=200,
+    t_thermalization=100,
+    t_training=2000,
     sigma=10.0,
     rho=28.0,
     beta=8 / 3,
@@ -97,7 +97,7 @@ def setup_reservoir(
 
     return W, W_in, W_out, r, u_tr
 
-def run_simulation(W, W_in, W_out, r_last, n_steps=100, dt=0.01, sigma=10.0, rho=10.0, beta=8 / 3):
+def run_simulation(W, W_in, W_out, r_last, n_steps=10000, dt=0.01, sigma=10.0, rho=10.0, beta=8 / 3):
     N = W.shape[0]
     traj = np.empty((n_steps, N))
 
