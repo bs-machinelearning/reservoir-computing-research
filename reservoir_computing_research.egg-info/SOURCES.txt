@@ -1,0 +1,7 @@
+README.md
+pyproject.toml
+reservoir_computing_research.egg-info/PKG-INFO
+reservoir_computing_research.egg-info/SOURCES.txt
+reservoir_computing_research.egg-info/dependency_links.txt
+reservoir_computing_research.egg-info/requires.txt
+reservoir_computing_research.egg-info/top_level.txt
