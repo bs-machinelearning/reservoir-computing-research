@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 
 def plot_state_std(R, dt=0.01):
     t = np.arange(len(R)) * dt
@@ -61,3 +62,77 @@ def plot_lorenz_3d(R, W_out, y_true):
     ax.set(xlabel="x", ylabel="y", zlabel="z", title="Lorenz attractor: true vs predicted")
     ax.legend()
     plt.show()
+    
+def plot_lorenz_components(Y_pred, Y_true, dt=0.01, labels=("x", "y", "z")):
+    t = np.arange(len(Y_pred)) * dt
+    fig, axes = plt.subplots(3, 1, figsize=(10, 7), sharex=True)
+
+    for i, ax in enumerate(axes):
+        ax.plot(t, Y_true[:, i], label=f"true {labels[i]}", lw=1.5)
+        ax.plot(t, Y_pred[:, i], "--", label=f"pred {labels[i]}", lw=1.2)
+        ax.set_ylabel(labels[i])
+        ax.legend()
+
+    axes[-1].set_xlabel("t")
+    fig.suptitle("Lorenz components: true vs predicted")
+    plt.tight_layout()
+    plt.show()
+    
+def plot_lorenz_3d_pred_vs_true(Y_pred, Y_true):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+    ax.plot(*Y_true.T, lw=0.7, color="black", label="true")
+    ax.plot(*Y_pred.T, lw=1.2, linestyle="--", color="tomato", label="pred")
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_zlabel("z")
+    ax.set_title("Lorenz attractor: true vs predicted")
+    ax.legend()
+    plt.show()
+    
+
+def plot_lorenz_3d_interactive(Y_pred, Y_true):
+    fig = go.Figure()
+
+    split_idx = max(1, int(0.1 * len(Y_pred)))
+
+    fig.add_trace(go.Scatter3d(
+        x=Y_true[:, 0],
+        y=Y_true[:, 1],
+        z=Y_true[:, 2],
+        mode="lines",
+        name="true",
+        line=dict(width=3, color="black"),
+    ))
+
+    fig.add_trace(go.Scatter3d(
+        x=Y_pred[:split_idx, 0],
+        y=Y_pred[:split_idx, 1],
+        z=Y_pred[:split_idx, 2],
+        mode="lines",
+        name="pred (first 10%)",
+        line=dict(width=10, dash="dash", color="blue"),
+    ))
+
+    fig.add_trace(go.Scatter3d(
+        x=Y_pred[split_idx - 1 :, 0],
+        y=Y_pred[split_idx - 1 :, 1],
+        z=Y_pred[split_idx - 1 :, 2],
+        mode="lines",
+        name="pred (rest)",
+        line=dict(width=10, dash="dash", color="red"),
+    ))
+
+    fig.update_layout(
+        title="Lorenz attractor: true vs predicted",
+        scene=dict(
+            xaxis_title="x",
+            yaxis_title="y",
+            zaxis_title="z",
+            aspectmode="data",
+        ),
+        width=900,
+        height=700,
+    )
+
+    fig.show()
