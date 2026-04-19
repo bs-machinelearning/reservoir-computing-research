@@ -94,8 +94,6 @@ def plot_lorenz_3d_pred_vs_true(Y_pred, Y_true):
 def plot_lorenz_3d_interactive(Y_pred, Y_true):
     fig = go.Figure()
 
-    split_idx = max(1, int(0.1 * len(Y_pred)))
-
     fig.add_trace(go.Scatter3d(
         x=Y_true[:, 0],
         y=Y_true[:, 1],
@@ -106,21 +104,12 @@ def plot_lorenz_3d_interactive(Y_pred, Y_true):
     ))
 
     fig.add_trace(go.Scatter3d(
-        x=Y_pred[:split_idx, 0],
-        y=Y_pred[:split_idx, 1],
-        z=Y_pred[:split_idx, 2],
+        x=Y_pred[:, 0],
+        y=Y_pred[:, 1],
+        z=Y_pred[:, 2],
         mode="lines",
-        name="pred (first 10%)",
-        line=dict(width=10, dash="dash", color="blue"),
-    ))
-
-    fig.add_trace(go.Scatter3d(
-        x=Y_pred[split_idx - 1 :, 0],
-        y=Y_pred[split_idx - 1 :, 1],
-        z=Y_pred[split_idx - 1 :, 2],
-        mode="lines",
-        name="pred (rest)",
-        line=dict(width=10, dash="dash", color="red"),
+        name="pred",
+        line=dict(width=4, color="tomato"),   # solid + thinner
     ))
 
     fig.update_layout(
