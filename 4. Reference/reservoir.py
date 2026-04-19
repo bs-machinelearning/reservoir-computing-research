@@ -30,15 +30,15 @@ def extract_data(file_path):
 
 def setup_reservoir(
     file_path,
-    J=0.9,
+    J=1.5,
     lambda_reg=3e-6,
-    t_thermalization=100,
+    t_thermalization=30,
     t_training=2000,
     sigma=10.0,
     rho=28.0,
     beta=8 / 3,
     dt=0.01,
-    input_scale=0.03,
+    input_scale=1.5,
     seed=42,
 ):
     G, nodes_df, edges_df = extract_data(file_path)
@@ -77,6 +77,10 @@ def setup_reservoir(
         return data
 
     lorenz_full = lorenz_euler(total_steps)
+    u_mean = lorenz_full.mean(axis=0)
+    u_std  = lorenz_full.std(axis=0)
+    u_std[u_std == 0] = 1.0
+    lorenz_full = (lorenz_full - u_mean) / u_std
     u_tr = lorenz_full[washout_steps:]
 
     rng = np.random.default_rng(seed)
@@ -95,16 +99,18 @@ def setup_reservoir(
     RtU = R.T @ u_tr
     W_out = np.linalg.solve(RtR + lambda_reg * np.eye(N), RtU)
 
-    return W, W_in, W_out, r, u_tr
+    return W, W_in, W_out, r, u_tr, u_mean, u_std
 
-def run_simulation(W, W_in, W_out, r_last, n_steps=10000, dt=0.01, sigma=10.0, rho=10.0, beta=8 / 3):
+def run_simulation(W, W_in, W_out, r_last, u_mean, u_std, n_steps=200):
     N = W.shape[0]
     traj = np.empty((n_steps, N))
 
     r = r_last.copy()
 
     for t in range(n_steps):
-        u_hat = r @ W_out
+        u_hat_norm = r @ W_out
+        u_hat      = u_hat_norm * u_std + u_mean  # denormalize before feeding back
+        u_hat_norm2 = (u_hat - u_mean) / u_std   # renormalize for W_in
         r = np.tanh(W @ r + W_in @ u_hat)
         traj[t] = r
 
