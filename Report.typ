@@ -1,6 +1,6 @@
 
 #set document(
-  title: [Reservoir Computing with the Human Connectome Project],
+  title: [Reservoir Computing with the \ Human Connectome Project],
 )
 
 #set page(
@@ -24,16 +24,19 @@
 )[
   #align(center)[
 
-
+    #title()
     #grid(
       columns: (1fr, 1fr, 1fr),
       gutter: 1em,
       align: center,
       [
+        *Tebe Nigrelli*
+      ],
+      [
         *Kevin Cesenj*
       ],   
       [
-        *Christina Eirini Christodoulou*
+        *Christina E. Christodoulou*
       ],
       [
         *Giusi Scozzi*
@@ -41,9 +44,6 @@
       [
         *Vecdi Gokmen*
       ],   
-      [
-        *Tebe Nigrelli*
-      ],
       [
         *Lorena Pavel*
       ],
@@ -83,7 +83,7 @@ A useful way to think about the reservoir is through the analogy of a lake. When
 This intuition can be formalized by describing the reservoir as a dynamical system. The state of neuron $i$ at time $t$, denoted by $r_i(t)$, evolves according to
 
 $
-frac(d r_i, d t) = -r_i(t) + S(sum_(j=1)^N W_(i j) r_j(t))
+(d r_i) / (d t) = -r_i (t) + S(sum_(j=1)^N W_(i j) r_j (t))
 $
 
 The term $-r_i(t)$ represents a decay, while the second term captures how the neuron is influenced by other neurons through the weight matrix $W$, after applying a nonlinear transformation. The current state of the reservoir can therefore be seen as a compressed representation of recent inputs.
@@ -97,9 +97,7 @@ $
 which leads, via Euler discretization, to the update rule
 
 $
-r_i (t + delta t) = r_i (t) +\ + delta t * [
-  -r_i(t) + S(sum_j W_(i j) r_j(t) + sum_j W^("in")_(i j) h_j (t))
-]
+r_i (t + delta t) = r_i (t) + delta t (d r_i) / (d t)
 $
 The richness of the reservoir dynamics emerges directly from its structure: the irregular and highly interconnected network transforms even simple inputs into complex patterns of activity. Different neurons respond in different ways, creating a diverse set of signals within the network. This diversity is useful because it provides a wide range of features that can later be used to extract meaningful information from the system.
 
@@ -119,11 +117,8 @@ As a result, different regimes can be identified: for $J < 1$, activity decays a
 
 External input enters the system through the input weight matrix $W^"in"$. In the state equation it appears as $sum_j W^"in"_(i j) h_j(t)$ and determines how the input signal affects each neuron before the nonlinearity is applied. The matrix $W^"in"$ is fixed and randomly initialized, typically with Gaussian entries. It determines how different components of the input signal are distributed across the neurons of the reservoir. As a result, the state of the reservoir reflects both its internal dynamics and the incoming input.
 
-The goal is to use the reservoir state to predict the next value of the input signal, formally expressed as $h(t) approx h(t + delta t)$. To do this, the model maps the reservoir state $r(t)$ to an output through a linear transformation:
-
-$h(t) = W_"readout" * r(t)$
-
-where $W_"readout"$ contains the readout weights.
+The goal is to use the reservoir state to predict the next value of the input signal, formally expressed as $h(t) approx h(t + delta t)$. To do this, the model maps the reservoir state $r(t)$ to an output through a linear transformation: 
+$h(t) = W_"readout" * r(t)$ where $W_"readout"$ contains the readout weights.
 
 Unlike the internal and input weights, which remain fixed, the readout weights are the only parameters that are adjusted during training. The objective is to approximate the next-step value of the input signal, so that $h(t) approx  h(t + delta t)$.
 
@@ -268,9 +263,10 @@ In this section we introduce the chaotic system we will be using to test our res
 The Lorenz system is a set of 3 coupled ordinary differential equations, developed by Edward Lorenz while studying atmospheric convection. It is a famous example of deterministic chaos, as the equations have no random elements; however, they are extremely sensitive to initial conditions and, in some cases, display no periodic behavior.
 
 $
-dot(x) = sigma (y - x), 
-dot(y) = x (rho - z) - y, 
-dot(z) = x y - beta z
+cases(
+(d x) / (d t) = sigma (y - x), 
+(d y) / (d t) = x (rho - z) - y, 
+(d z) / (d t) = x y - beta z )
 $
 
 The parameters $rho$, $sigma$ and $beta$ are constants to be chosen, while $x(t)$, $y(t)$ and $z(t)$ are the time-dependent state variables.
