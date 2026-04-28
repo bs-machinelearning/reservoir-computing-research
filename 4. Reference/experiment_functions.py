@@ -267,32 +267,40 @@ def run_experiment(
 # ── Plotting ──────────────────────────────────────────────────────────────────
 
 def plot_experiment(results, p_values, epsilon, n_runs, n_files,
-                    t_training, perturbation_types=None):
+                    t_training, perturbation_types=None, confidence=0.95):
     
-    """
-    Plot E[t_div] ± SEM vs p, one subplot per perturbation type (2×2 grid).
-    """
     import matplotlib.pyplot as plt
+    from scipy import stats
 
     if perturbation_types is None:
         perturbation_types = PERTURBATION_TYPES
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8), sharey=False)
+    fig, axes = plt.subplots(2, 2, figsize=(13, 9), sharey=False)
 
     for ax, mode in zip(axes.flatten(), perturbation_types):
-        vals  = [results[mode][p] for p in p_values]
-        means = [np.mean(v) for v in vals]
-        sems  = [np.std(v, ddof=1) / np.sqrt(len(v)) for v in vals]
+        vals  = [np.array(results[mode][p]) for p in p_values]
+        means = np.array([v.mean() for v in vals])
+        n_obs = np.array([len(v) for v in vals])
 
-        ax.plot(p_values, means, marker="o", lw=2, color="steelblue")
-        ax.fill_between(
-            p_values,
-            np.array(means) - np.array(sems),
-            np.array(means) + np.array(sems),
-            alpha=0.25, color="steelblue",
-        )
-        ax.axhline(means[0], color="gray", lw=1, linestyle="--",
-                   label="baseline (p=0)")
+        # t-based confidence intervals
+        t_crit = stats.t.ppf((1 + confidence) / 2, df=n_obs - 1)
+        sems   = np.array([v.std(ddof=1) / np.sqrt(len(v)) for v in vals])
+        ci_lo  = means - t_crit * sems
+        ci_hi  = means + t_crit * sems
+
+        # confidence band
+        ax.fill_between(p_values, ci_lo, ci_hi,
+                        alpha=0.20, color="steelblue",
+                        label=f"{int(confidence*100)}% CI")
+
+        # mean line
+        ax.plot(p_values, means, marker="o", lw=2,
+                color="steelblue", label="mean")
+
+        # baseline
+        # ax.axhline(means[0], color="gray", lw=1,
+        #            linestyle="--", label="baseline (p=0)")
+
         ax.set_title(mode.replace("_", " "), fontsize=13, fontweight="bold")
         ax.set_xlabel("perturbation  p")
         ax.set_ylabel(r"$\mathbb{E}[t_{\mathrm{div}}]$ (s)")
@@ -305,7 +313,7 @@ def plot_experiment(results, p_values, epsilon, n_runs, n_files,
         r"\!\left[t_{\mathrm{div}}(f_p(R))\right]\right]$"
         f" vs perturbation $p$\n"
         f"(ε={epsilon},  n_runs={n_runs},  n_files={n_files},"
-        f"  t_train={t_training} s)",
+        f"  t_train={t_training} s,  {int(confidence*100)}% CI)",
         fontsize=12,
     )
     plt.tight_layout()
