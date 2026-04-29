@@ -56,6 +56,7 @@ def setup_reservoir(
     dt=0.01,
     input_scale=1.5,
     seed=42,
+    alpha=0.3
 ):
     G, nodes_df, edges_df = extract_data(file_path)
 
@@ -96,11 +97,11 @@ def setup_reservoir(
 
     r = np.zeros(N)
     for t in range(washout_steps):
-        r = np.tanh(W @ r + W_in @ lorenz_full_norm[t])
+        r = (1 - alpha) * r + alpha * np.tanh(W @ r + W_in @ lorenz_full_norm[t])
 
     R_train = np.empty((train_steps, N))
     for t in range(train_steps):
-        r = np.tanh(W @ r + W_in @ u_tr[t])
+        r = (1 - alpha) * r + alpha * np.tanh(W @ r + W_in @ u_tr[t])
         R_train[t] = r
 
     RtR = R_train[:-1].T @ R_train[:-1]
@@ -108,7 +109,7 @@ def setup_reservoir(
     W_out = np.linalg.solve(RtR + lambda_reg * np.eye(N), RtU)
     return W, W_in, W_out, r, u_tr, u_mean, u_std, lorenz_last_state
 
-def run_simulation(W, W_in, W_out, r_last, u_mean, u_std, n_steps=200):
+def run_simulation(W, W_in, W_out, r_last, u_mean, u_std, n_steps=200, alpha=0.3):
     N = W.shape[0]
     R = np.empty((n_steps, N))
     Y_norm = np.empty((n_steps, 3))
@@ -122,7 +123,7 @@ def run_simulation(W, W_in, W_out, r_last, u_mean, u_std, n_steps=200):
         Y_norm[t] = u_hat_norm
         Y[t] = u_hat
         # feedback must be normalized
-        r = np.tanh(W @ r + W_in @ u_hat_norm)
+        r = (1 - alpha) * r + alpha * np.tanh(W @ r + W_in @ u_hat_norm)
         R[t] = r
 
     return R, Y_norm, Y
@@ -141,6 +142,7 @@ def run_reservoir_workflow(
     dt,
     input_scale,
     seed,
+    alpha
 ):
     # -------------------------
     # derived step counts
@@ -165,6 +167,7 @@ def run_reservoir_workflow(
         dt=dt,
         input_scale=input_scale,
         seed=seed,
+        alpha=alpha
     )
     t1 = time.perf_counter()
     print(f"setup_reservoir finished in {t1 - t0:.3f} s")
@@ -179,6 +182,7 @@ def run_reservoir_workflow(
         u_mean=u_mean,
         u_std=u_std,
         n_steps=n_steps,
+        alpha=alpha
     )
     t1 = time.perf_counter()
     print(f"run_simulation finished in {t1 - t0:.3f} s")
@@ -218,5 +222,6 @@ def run_reservoir_workflow(
         Y_true,
         lorenz_states,
         total_runtime,
+        alpha
     )
 
