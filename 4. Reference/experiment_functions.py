@@ -80,7 +80,7 @@ def perturb_graph(G, mode, p, rng):
 # ── Single run on a (possibly perturbed) graph ────────────────────────────────
 
 def run_one(G, seed, J, lambda_reg, t_thermalization, t_training, t_prediction,
-            sigma, rho, beta, dt, input_scale):
+            sigma, rho, beta, dt, input_scale, alpha):
     """
     Build W from graph G, train the reservoir, run autonomous prediction,
     and return predicted and true Lorenz trajectories.
@@ -139,12 +139,12 @@ def run_one(G, seed, J, lambda_reg, t_thermalization, t_training, t_prediction,
     # washout
     r = np.zeros(N)
     for t in range(ws):
-        r = np.tanh(W @ r + W_in @ ln[t])
+        r = (1-alpha) * r + alpha * np.tanh(W @ r + W_in @ ln[t])
 
     # training
     R = np.empty((ts, N))
     for t in range(ts):
-        r = np.tanh(W @ r + W_in @ u_tr[t])
+        r = (1-alpha) * r + alpha * np.tanh(W @ r + W_in @ u_tr[t])
         R[t] = r
 
     W_out = np.linalg.solve(
@@ -157,7 +157,7 @@ def run_one(G, seed, J, lambda_reg, t_thermalization, t_training, t_prediction,
     for t in range(ns):
         u_hat_norm = r @ W_out
         Y_pred[t]  = u_hat_norm * u_std + u_mean
-        r          = np.tanh(W @ r + W_in @ u_hat_norm)
+        r          = (1-alpha) * r + alpha * np.tanh(W @ r + W_in @ u_hat_norm)
 
     # ground-truth Lorenz continuing from where training left off
     Y_true, _ = lorenz_euler(ns, dt=dt, sigma=sigma, rho=rho, beta=beta,
@@ -188,6 +188,7 @@ def run_experiment(
     dt=0.01,
     input_scale=0.5,
     seed_base=42,
+    alpha=0.3,
     perturbation_types=None,
 ):
     """
@@ -241,7 +242,7 @@ def run_experiment(
                         t_training=t_training,
                         t_prediction=t_prediction,
                         sigma=sigma, rho=rho, beta=beta,
-                        dt=dt, input_scale=input_scale,
+                        dt=dt, input_scale=input_scale, alpha=alpha,
                     )
                     elapsed = time.perf_counter() - t0
 
