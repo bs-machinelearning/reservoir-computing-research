@@ -97,11 +97,11 @@ def setup_reservoir(
 
     r = np.zeros(N)
     for t in range(washout_steps):
-        r = (1 - alpha) * r + alpha * np.tanh(W @ r + W_in @ lorenz_full_norm[t])
+        r = (1-alpha) * r + alpha * np.tanh(W @ r + W_in @ lorenz_full_norm[t])
 
     R_train = np.empty((train_steps, N))
     for t in range(train_steps):
-        r = (1 - alpha) * r + alpha * np.tanh(W @ r + W_in @ u_tr[t])
+        r = (1-alpha) * r + alpha * np.tanh(W @ r + W_in @ u_tr[t])
         R_train[t] = r
 
     RtR = R_train[:-1].T @ R_train[:-1]
@@ -123,7 +123,7 @@ def run_simulation(W, W_in, W_out, r_last, u_mean, u_std, n_steps=200, alpha=0.3
         Y_norm[t] = u_hat_norm
         Y[t] = u_hat
         # feedback must be normalized
-        r = (1 - alpha) * r + alpha * np.tanh(W @ r + W_in @ u_hat_norm)
+        r = (1-alpha) * r + alpha * np.tanh(W @ r + W_in @ u_hat_norm)
         R[t] = r
 
     return R, Y_norm, Y
