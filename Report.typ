@@ -277,9 +277,11 @@ Another important property of the Lorenz system is that, although its trajectori
 
 This property makes the system especially useful for reservoir computing, as besides testing short-term prediction accuracy, it also allows us to evaluate whether the reservoir has learned the overall qualitative dynamics of the system. A good model should reproduce the same bounded attractor structure even after exact predictions have diverged.
 
-To generate our own Lorenz attractor, we turn to numerical integration, specifically the Euler method due to its computational speed and efficiency. We use the classical Lorenz-63 parameter values, as this combination places the system in a regime where the dynamics are chaotic but still bounded, producing the well-known butterfly attractor when plotted.
+To generate our own Lorenz attractor, we turn to numerical integration, specifically the Euler method due to its computational speed and efficiency. We use the classical Lorenz-63 parameter values, as this combination places the system in a regime where the dynamics are chaotic but still bounded, producing the well-known butterfly attractor when plotted. (plot Lorenz 3d data we geenerated)
 
 
 = Analysis of reservoir dynamics on human connectome networks
-
+== Comparison with Gaussian reservoirs
+To evaluate the performance of the connectome-based reservoir, we first compare it to a standard Gaussian random reservoir. Both reservoirs are trained to predict the next time step of the Lorenz system using identical training methods explained in previous sections, and their performance is compared using Root Mean Square Error (RMSE) over time on our generated lorentz system.
+To create a similar comparison, we used identical parameters for both reservoirs, including the number of neurons ($N = 463$), the input scaling factor, and the spectral radius. The only difference is therfore in the internal structure of the reservoir.
 
