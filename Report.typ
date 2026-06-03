@@ -7,10 +7,10 @@
   paper: "a4",
   columns: 2,
   margin: (
-    left: 5em,
-    right: 5em,
-    top: 5em,
-    bottom: 5em,
+    left: 5.5em,
+    right: 5.5em,
+    top: 6em,
+    bottom: 6em,
   ),
   numbering: "1",
 )
@@ -85,9 +85,7 @@ The reservoir is driven by a chaotic input signal and trained to predict the nex
 
 = Reservoir dynamics
 
-A reservoir can be understood through the analogy of a lake. Raindrops create ripples that spread, interact, and persist before fading; by observing the surface, one can infer something about the rain without seeing each drop. Similarly, an input signal perturbs the network, and that perturbation propagates through the connections and shapes later states.
-
-This intuition can be formalized by describing the reservoir as a dynamical system. The state of neuron $i$ at time $t$, denoted by $r_i(t)$, evolves as
+A reservoir can be understood through the analogy of a lake. Raindrops create ripples that spread, interact, and persist before fading; by observing the surface, one can infer something about the rain without seeing each drop. Similarly, an input signal perturbs the network, and that perturbation propagates through the connections and shapes later states. This intuition can be formalized by describing the reservoir as a dynamical system. The state of neuron $i$ at time $t$, denoted by $r_i(t)$, evolves as
 
 $
   (d r_i) / (d t) = -r_i (t) + S(sum_(j=1)^N W_(i j) r_j (t))
@@ -153,9 +151,9 @@ Figure 2 shows representative neuron trajectories for different values of $J$. F
       columns: 3,
       gutter: 1em,
 
-      image("img/figure1.png", width: 100%),
-      image("img/figure1.1.png", width: 100%),
-      image("img/figure1.2.png", width: 100%),
+      image("img/figure1.png", width: 120%),
+      image("img/figure1.1.png", width: 120%),
+      image("img/figure1.2.png", width: 120%),
     ),
     caption: [Neuron trajectories for $J < 1$, $J approx 1$, and $J > 1$.],
   )
@@ -206,7 +204,7 @@ We also augment the state matrix with a constant bias term to capture spatial of
 The main experimental focus in this phase was tuning $lambda$. On the baseline network ($N = 250$), we tested $30$ logarithmically spaced values from $10^{-18}$ to $1$.
 
 #figure(
-  image("img/figure5.png", width: 80%),
+  image("img/figure5.png", width: 100%),
 )
 
 Increasing the regularization penalty raises training RMSE across all three spatial axes. The best training fit occurs for very small $lambda$ values, around $10^{-8}$.
@@ -278,24 +276,20 @@ $
   )
 $
 
-The parameters $rho$, $sigma$, and $beta$ are constants, while $x(t)$, $y(t)$, and $z(t)$ are time-dependent state variables.
+The parameters $rho$, $sigma$, and $beta$ are constants, while $x(t)$, $y(t)$, and $z(t)$ are time-dependent state variables. Sensitivity to initial conditions makes long-term prediction infeasible. Although the system is deterministic, small numerical errors are amplified exponentially, so trajectories eventually diverge from the true continuation. Another key property is boundedness. Although trajectories are chaotic and sensitive, they do not diverge to infinity; instead, they remain confined to the butterfly-shaped Lorenz attractor.
 
-Sensitivity to initial conditions makes long-term prediction infeasible. Although the system is deterministic, small numerical errors are amplified exponentially, so trajectories eventually diverge from the true continuation.
-
-Another key property is boundedness. Although trajectories are chaotic and sensitive, they do not diverge to infinity; instead, they remain confined to the butterfly-shaped Lorenz attractor.
-
-This makes the system useful for reservoir computing: beyond short-term accuracy, it tests whether the model learns the qualitative attractor geometry. A good autonomous model should remain bounded even after exact phase alignment is lost.
-
-We generate the Lorenz attractor by numerical integration with the Euler method, chosen for speed. The classical Lorenz-63 parameters place the system in a chaotic but bounded regime that produces the familiar butterfly attractor.
+This makes the system useful for reservoir computing: beyond short-term accuracy, it tests whether the model learns the qualitative attractor geometry. A good autonomous model should remain bounded even after exact phase alignment is lost. We generate the Lorenz attractor by numerical integration with the Euler method, chosen for speed. The classical Lorenz-63 parameters place the system in a chaotic but bounded regime that produces the familiar butterfly attractor.
 
 
 = Results
 
-The final experiments, collected in `4. Reference/`, all test the same task: train a fixed reservoir on teacher-forced Lorenz dynamics, then run it autonomously and compare the prediction with the true continuation. Qualitatively, we ask whether the model remains on a bounded Lorenz-like attractor. Quantitatively, the perturbation notebooks use divergence time $t_"div"$, the first time at which the Euclidean prediction error exceeds a threshold $epsilon$.
+In the final stage of the project, we compared the different reservoir variants on the same Lorenz prediction task. In each case, the reservoir was first driven by the true Lorenz signal using teacher forcing. After training the linear readout, the model was then run autonomously, meaning that its own predicted output was fed back as the next input.
+
+Because the Lorenz system is chaotic, exact trajectory matching is not expected over long horizons. For this reason, we evaluate the models in two ways: visually, by checking whether the autonomous prediction stays on a bounded Lorenz-like attractor, and quantitatively, using the divergence time $t_"div"$. This is defined as the first time at which the Euclidean distance between the prediction and the true trajectory exceeds a fixed threshold $epsilon$.
 
 == Gaussian random reservoir baseline
 
-The Gaussian baseline in `gaussian_reservoir_implementation.ipynb` uses a dense random recurrent matrix rather than a connectome. In the recorded run, the reservoir has $N = 300$, target spectral radius $J = 0.85$, input scaling $0.5$, leak parameter $alpha = 1$, and a training window of $10000$ time units. The actual spectral radius is $0.8500$, and the full workflow takes about $26.4$ seconds.
+The Gaussian reservoir was used as a reference model because its recurrent matrix is dense and randomly generated, rather than based on brain connectivity. In our baseline run, the reservoir used $N = 300$ neurons, target spectral radius $J = 0.85$, input scaling $0.5$, leak parameter $alpha = 1$, and a training window of $10000$ time units. The measured spectral radius after scaling was $0.8500$, and the full run took about $26.4$ seconds.
 
 #figure(
   grid(
@@ -307,13 +301,13 @@ The Gaussian baseline in `gaussian_reservoir_implementation.ipynb` uses a dense 
   caption: [Gaussian reservoir prediction: components and 3D attractor.],
 )
 
-Qualitatively, the Gaussian reservoir produces a bounded oscillatory trajectory, but it soon loses phase alignment with the true Lorenz signal. In 3D, the prediction visits the same broad phase-space region but traces loops that are too regular and too spread out.
+The baseline produces a bounded oscillatory prediction, so it does learn part of the Lorenz structure. However, it loses phase alignment with the true trajectory after a short time. In the 3D plot, the predicted path remains in roughly the correct region of phase space, but the loops are more regular and more spread out than the true attractor.
 
-This suggests that the baseline learned a coarse autonomous oscillator rather than the exact Lorenz flow. A likely reason is the shift from one-step training to closed-loop evaluation: small one-step errors are fed back and amplified by chaotic dynamics. The dense topology provides many features, but these hyperparameters do not yield stable long-horizon tracking.
+This suggests that the model learned a coarse autonomous oscillator rather than the exact Lorenz flow. The main difficulty is the closed-loop setting: during training, the model only needs to make one-step predictions, but during autonomous prediction even small errors are fed back into the system. Since the Lorenz dynamics amplify small differences, these errors quickly accumulate.
 
 == Human-connectome reservoir
 
-The main connectome experiment in `main.ipynb` replaces the Gaussian recurrent matrix with the weighted adjacency matrix of a human connectome graph. The notebook uses $J = 0.9$, input scaling $0.5$, ridge parameter $lambda = 3e-6$, and a training horizon of $20000$ time units. The workflow takes about $111.0$ seconds, with reported divergence time $t_"div" approx 0.39s$ for $epsilon = 1.0$.
+The main connectome model replaces the Gaussian recurrent matrix with the weighted adjacency matrix of a human structural connectome. This gives the reservoir an anatomical topology while keeping the same basic learning procedure: the internal weights are fixed, and only the linear readout is trained. The experiment used $J = 0.9$, input scaling $0.5$, ridge parameter $lambda = 3e-6$, and a training horizon of $20000$ time units. The run took about $111.0$ seconds, with a divergence time of approximately $t_"div" = 0.39s$ for $epsilon = 1.0$.
 
 #figure(
   grid(
@@ -325,13 +319,13 @@ The main connectome experiment in `main.ipynb` replaces the Gaussian recurrent m
   caption: [Connectome reservoir prediction: components and 3D attractor.],
 )
 
-The component plot shows correct initial scale and oscillatory structure, followed by rapid loss of alignment. In 3D, the prediction remains bounded and Lorenz-like but expands away from the true attractor.
+The component-wise prediction starts at the correct scale and initially follows the oscillatory pattern of the Lorenz signal. After this short initial period, the predicted and true trajectories separate. In the 3D view, the autonomous trajectory remains bounded and still resembles a Lorenz attractor, although it expands away from the true one.
 
-The short divergence time is expected because the Lorenz system amplifies small errors exponentially. More importantly, the connectome reservoir captures some qualitative geometry even though its internal weights are anatomical rather than optimized for this task. The mismatch reflects that a biologically motivated topology need not be ideal for this particular chaotic signal.
+The short divergence time is not surprising, since the Lorenz system is highly sensitive to small errors. The more relevant result is that the connectome-based reservoir still produces nontrivial autonomous dynamics, even though its recurrent structure was not designed for this task. At the same time, the mismatch with the true trajectory shows that an anatomical network is not automatically optimal for predicting an artificial chaotic system.
 
 == Leak-rate connectome reservoir
 
-The leaky version in `main_with_leak_rate.ipynb` changes the state update to mix the old state with the new nonlinear activation. The recorded run uses $alpha = 0.3$, $J = 0.9$, input scaling $0.5$, $lambda = 3e-6$, and a shorter training horizon of $1000$ time units. The notebook reports a total runtime of about $3.74$ seconds.
+We also tested a leaky version of the connectome reservoir. In this model, the new reservoir state is mixed with the previous state, which slows down the update and gives the system more inertia. The tested configuration used $alpha = 0.3$, $J = 0.9$, input scaling $0.5$, $lambda = 3e-6$, and a shorter training horizon of $1000$ time units. This run took about $3.74$ seconds.
 
 #figure(
   grid(
@@ -343,40 +337,42 @@ The leaky version in `main_with_leak_rate.ipynb` changes the state update to mix
   caption: [Leaky connectome prediction ($alpha = 0.3$).],
 )
 
-The leaky reservoir produces smoother autonomous dynamics. The prediction follows the initial state more gently before drifting, and the 3D attractor remains bounded. However, it still deviates from the true trajectory and does not reproduce the exact lobe-to-lobe switching pattern.
+The leaky reservoir gives smoother autonomous predictions. The model drifts away from the true signal more gradually, and the 3D trajectory remains bounded. However, it still does not reproduce the exact lobe-switching behavior of the Lorenz attractor.
 
-The leak rate adds inertia to the reservoir state. This can preserve memory and prevent abrupt updates, but it also slows the response to new input. The result is a trade-off: dynamics are smoother, but exact chaotic prediction still fails quickly. Because this run uses a shorter training window, it should be read as a qualitative comparison rather than a fully tuned improvement.
+This result shows the main trade-off introduced by the leak rate. A smaller $alpha$ can improve smoothness and memory because the reservoir changes less abruptly from one step to the next. On the other hand, the model may respond too slowly to the fast changes in the input signal. Since this run used a shorter training window, we treat it mainly as a qualitative comparison rather than evidence of a fully optimized improvement.
 
 == Perturbation experiments
 
-The perturbation experiments in `run_experiment.ipynb` evaluate robustness under four transformations: node deletion, edge deletion, edge swapping, and node-label swapping. For each perturbation level $p$, divergence time is averaged across multiple connectome files and random seeds.
+To test robustness, we applied four types of perturbations to the connectome reservoir: node deletion, edge deletion, edge swapping, and node-label swapping. For each perturbation level $p$, we averaged the divergence time across multiple connectome graphs and random seeds.
 
 #figure(
   image("img/perturbations_all_modes.png", width: 100%),
   caption: [Divergence time under four connectome perturbations.],
 )
 
-Node deletion has the strongest effect. As $p$ increases, average divergence time drops sharply and approaches zero when most nodes are removed. This is expected: removing nodes reduces reservoir dimension, leaving the readout fewer variables with which to reconstruct the Lorenz state.
+Node deletion has the strongest effect. As $p$ increases, the average divergence time drops sharply and approaches zero when most nodes are removed. This is expected because deleting nodes reduces the dimension of the reservoir. With fewer internal variables, the readout has less information available to reconstruct the Lorenz state.
 
-Edge deletion is less damaging over most of the range and drops strongly only near extreme deletion. This suggests substantial redundancy: many edges can be removed without immediately destroying short-term dynamics. A methodological factor also matters: in `experiment_functions.py`, each perturbed graph is rescaled by its own spectral radius, keeping recurrent gain comparable and partly masking edge-deletion effects.
+Edge deletion has a weaker effect over most of the tested range and becomes clearly damaging only at very high deletion levels. This points to redundancy in the graph: many individual connections can be removed while enough recurrent structure remains for short-term prediction. There is also an implementation effect to consider. After perturbation, each graph is rescaled by its spectral radius, so the overall recurrent gain remains comparable across perturbation levels. This normalization probably reduces the apparent impact of deleting edges.
 
-Edge swapping has little visible effect in the plotted range. For this task and hyperparameter setting, preserving node count and global recurrent strength matters more than preserving exact anatomical edge placement. Node swapping also has little effect because it mostly changes labels or ordering while leaving the graph nearly isomorphic.
+Edge swapping produces little visible change in the plotted range. For this task, preserving the number of nodes and the global recurrent strength seems more important than preserving the exact anatomical placement of every edge. Node-label swapping also has little effect because it mainly changes the ordering or labels of nodes while leaving the underlying graph structure almost unchanged.
 
 == High-damage edge-deletion sweep
 
-The saved edge-deletion figure and `results.npz` file give a closer view of high perturbation levels. The mean divergence time changes only modestly from $p = 0$ to $p = 0.90$, then decreases more clearly at $p = 0.95$ and $p = 0.99$. In the saved arrays, the mean is about $0.51s$ at $p = 0$ and $0.36s$ at $p = 0.99$.
+We then examined edge deletion more closely at high perturbation levels. The average divergence time changes only slightly between $p = 0$ and $p = 0.90$, then decreases more noticeably at $p = 0.95$ and $p = 0.99$. In this sweep, the mean divergence time is about $0.51s$ with no edge deletion and about $0.36s$ at $p = 0.99$.
 
 #figure(
   image("img/drop_edges_high_damage.png", width: 100%),
   caption: [High-damage edge-deletion sweep.],
 )
 
-This supports the interpretation that the connectome reservoir is robust to moderate edge loss. Small or moderate deletion may remove mostly redundant connections, while the remaining weighted graph still supports short-horizon prediction. At very high deletion, the graph loses too much connectivity to maintain useful autonomous dynamics.
+This confirms that the connectome reservoir is fairly robust to moderate edge loss. A possible explanation is that many deleted edges are either weak or redundant, so the remaining graph can still support short-horizon dynamics. At extreme deletion levels, however, too much connectivity is removed, and the reservoir no longer provides a rich enough state representation.
 
 = Conclusion
 
-The experiments show that both Gaussian and connectome-based reservoirs can generate bounded Lorenz-like trajectories, but neither gives reliable long-horizon prediction under the tested settings. This is consistent with the Lorenz system: once the model runs autonomously, small readout errors are recursively amplified. The connectome result remains meaningful because it shows that a fixed anatomical graph can act as a reservoir with nontrivial computational dynamics.
+Overall, the experiments show that both Gaussian and connectome-based reservoirs can produce bounded Lorenz-like trajectories, but neither gives reliable long-horizon prediction with the tested hyperparameters. This is consistent with the chaotic nature of the Lorenz system. Once the model is run autonomously, small readout errors are repeatedly fed back into the reservoir and are quickly amplified.
 
-The perturbation results are the clearest finding. Removing nodes is far more damaging than removing or rewiring edges because node deletion directly reduces reservoir dimensionality. Edge deletion and swapping have weaker effects, likely due to redundant pathways and spectral rescaling that preserves global recurrent strength. The leak-rate experiment shows that slower updates can smooth predictions, but not solve divergence.
+The connectome result is still interesting because it shows that a fixed anatomical graph can function as a reservoir and generate nontrivial dynamics without training its internal weights. However, the task also makes clear that biological structure alone does not guarantee accurate prediction of an artificial chaotic signal.
 
-Future work should tune $J$, $alpha$, input sparsity, and regularization systematically, evaluate multiple connectome subjects with consistent data paths, and compare perturbations with and without spectral rescaling. This would separate topology from global gain and strengthen the biological interpretation of robustness.
+The perturbation experiments give the clearest conclusion. Removing nodes is much more harmful than removing or rewiring edges because it directly reduces the number of reservoir states available to the readout. Edge deletion and edge swapping have weaker effects, probably because the graph contains redundant pathways and because spectral rescaling preserves the overall recurrent strength. The leak-rate experiment suggests that slower reservoir updates can make predictions smoother, but this does not by itself solve the divergence problem.
+
+A stronger follow-up study would tune $J$, $alpha$, input sparsity, and regularization more systematically. It would also be useful to compare several connectome subjects using the same preprocessing pipeline and to repeat the perturbation experiments both with and without spectral rescaling. This would make it easier to separate the effect of anatomical topology from the effect of global gain.
