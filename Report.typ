@@ -1,6 +1,6 @@
 
 #set document(
-  title: [Reservoir Computing with the \ Human Connectome Project],
+  title: [Reservoir Computing Using Biologically Grounded Connectome Networks],
 )
 
 #set page(
@@ -33,7 +33,7 @@
         #link("https://github.com/tebe-nigrelli")[*Tebe Nigrelli*]
       ],
       [
-        #link("https://github.com/Kevin-CK3")[*Kevin Cesenj*]
+        #link("https://github.com/Kevin-CK3")[*Kevin Cesenj Klaric*]
       ],
       [
         #link("https://github.com/christod01")[*Christina E. Christodoulou*]
@@ -69,7 +69,7 @@
 #v(0.5em)
 #align(center)[*Abstract*]
 
-This project studies reservoir computing with human structural connectomes. We validate a standard pipeline on the Lorenz system, then replace the random recurrent matrix with a weighted Human Connectome Project adjacency matrix while training only a ridge-regression readout. Connectome revervoirs are comapred to the most basic Gaussain ones. All models recover bounded Lorenz-like dynamics but diverge quickly in exact trajectory prediction, consistent with chaos. Perturbations show node deletion is most damaging, while edge deletion and rewiring are weaker because much of the recurrent capacity and spectral scaling remains intact.
+This project explores the use of reservoir computing to predict chatoic time series, using a biologically grounded reservoir derived from the Human Connectome Project. We first briefly discuss reservoir dynamics and key properties. Then, the topology and structure of the connectome network is studied, and compared to a standard Gaussian network reservoir in the task of predicting the next time step of the Lorenz system. Finally, we evaluate the change in performance of the connectome reservoir following a series of perturbations to better understand how the connectome's structure supports computation and how robust it is to damage.
 
 #v(1em)
 
@@ -89,23 +89,26 @@ The reservoir is driven by a chaotic input signal and trained to predict the nex
 A reservoir can be understood through the analogy of a lake. Raindrops create ripples that spread, interact, and persist before fading; by observing the surface, one can infer something about the rain without seeing each drop. Similarly, an input signal perturbs the network, and that perturbation propagates through the connections and shapes later states. This intuition can be formalized by describing the reservoir as a dynamical system. The state of neuron $i$ at time $t$, denoted by $r_i(t)$, evolves as
 
 $
-  (d r_i) / (d t) = -r_i (t) + S(sum_(j=1)^N W_(i j) r_j (t))
+  frac(d r_i, d t) =
+  -r_i(t) + S(
+    sum_(j=1)^N W_(i j) r_j(t) + W_i^("in") u(t)
+  )
 $
 
-The term $-r_i(t)$ represents decay, while the second term captures recurrent input through the weight matrix $W$ after a nonlinear transformation. The current reservoir state is therefore a compressed representation of recent inputs.
+The term $-r_i(t)$ represents leaky decay, while the second term captures recurrent input and the external drive after a nonlinear transformation. The current reservoir state is therefore a compressed representation of recent inputs.
 
-In practice, its dynamics are approximated by evaluating the state at discrete time steps. The time derivative is expressed as
+In practice, this continuous-time dynamics is simulated by a discrete-time update with a leak rate parameter $alpha$. Using a forward Euler step with step size $alpha$ gives
 
-$
-  frac(d r_i (t), d t) = frac(r_i (t + delta t) - r_i (t), delta t)
-$
-
-which leads, via Euler discretization, to the update rule
 
 $
-  r_i (t + delta t) = r_i (t) + delta t (d r_i) / (d t)
+  r_i(t + alpha) =
+  (1 - alpha) r_i(t)
+  + alpha S(
+    sum_(j=1)^N W_(i j) r_j(t) + W_i^("in") u(t)
+  )
 $
-The richness of reservoir dynamics comes directly from its structure: an irregular, highly connected network turns even simple inputs into complex high dimensional activity patterns. Because neurons respond differently, the network produces a diverse feature set from which the readout can extract information. Reservoir compuinting works so well because it is generally easier to find patterns in a high-dimensional space than in the original input space.
+
+This matches the implementation in the code: each new reservoir state is a convex combination of the previous state and the current nonlinear activation, with $alpha$ controlling how fast the state updates. The richness of reservoir dynamics comes directly from its structure: an irregular, highly connected network turns even simple inputs into complex high dimensional activity patterns. Because neurons respond to excitations differently, the network produces a diverse feature set from which the readout can extract information. Reservoir computing works so well because it is generally easier to find patterns in a high-dimensional space rather than in the original input space.
 
 The nature of the dynamics is governed by the recurrent matrix $W$, which determines whether activity decays, persists, or grows. The resulting dynamical regime plays a central role in the reservoir's computational capacity.
 
@@ -133,7 +136,7 @@ The reservoir's internal structure is therefore not trained. Its computational p
 == Quantitatative analysis of reservoir dynamics
 
 
-Building on the framework introduced above, we now investigate how the reservoir dynamics change as the coupling parameter $J$ is varied.
+Building on the framework introduced above, we now investigate how the reservoir dynamics change as the coupling parameter $J$ is varied to get a better understanding of the system's behavior.
 
 #place(
   top + center,
@@ -193,7 +196,7 @@ Each node includes its 3D position, hemisphere, and anatomical label. Edges desc
 
 We separate the graph into node- and edge-level information to analyze both spatial organization and connection structure.
 
-At the node level, positions show a clear 3D brain organization. The distribution is roughly symmetric, with visible separation between hemispheres; most regions form a compact structure, while boundary nodes are more spread out. This confirms that the graph preserves anatomical layout.
+At the node level, positions show a clear 3D brain organization, seen in Figure 4. The distribution is roughly symmetric, with visible separation between hemispheres; most regions form a compact structure, while boundary nodes are more spread out. This confirms that the graph preserves anatomical layout.
 
 #figure(
   image("img/figure6.png", width: 100%),
@@ -206,7 +209,7 @@ The high skewness ($approx 6.37$) and large kurtosis ($approx 63$) support this 
 
 Fiber length spans a wider range, roughly $10$ to $100$, and decays more smoothly, with moderate skewness.
 
-The FA distribution is more concentrated and decreases rapidly as values increase. Visually it resembles an exponential-like decay, though a formal test would be needed to confirm this.
+The FA distribution is more concentrated and decreases rapidly as values increase. Visually it resembles an exponential-like decay, though a formal test would be needed to confirm this. These reuslts are shown in Figure 5, which plots histograms and pairwise densities of the three edge features.
 
 Overall, the connectome is heterogeneous rather than uniform, with a small subset of connections carrying much larger weights.
 
@@ -215,7 +218,7 @@ Overall, the connectome is heterogeneous rather than uniform, with a small subse
   caption: [Edge-feature histograms and pairwise densities.],
 )
 
-We further examine the edge features through correlation analysis. Most relationships are weak. The clearest pattern is a moderate negative correlation between fiber length and number of fibers ($rho approx -0.37$), suggesting that longer connections tend to involve fewer fibers.
+We further examine the edge features through correlation analysis, shown in Figure 6. Most relationships are weak. The clearest pattern is a moderate negative correlation between fiber length and number of fibers ($rho approx -0.37$), suggesting that longer connections tend to involve fewer fibers.
 
 Correlations involving FA are much weaker ($rho approx 0.08$ with fiber length and $rho approx 0.04$ with number of fibers), suggesting that FA captures a different aspect of connectivity.
 
@@ -228,7 +231,9 @@ We use Spearman's rank correlation rather than Pearson correlation because the e
 
 Finally, the network shows non-trivial *community structure*: groups of nodes are more strongly connected internally than with the rest of the graph. This supports the view of the connectome as a structured, not random, network.
 
-== Lorenz System overview
+= Training the reservoir
+
+== Lorenz system overview
 
 Before delving into the training process of the reservoir, we first introduce the chaotic system used to test our reservoir, chosen for its simplicity and rich nonlinear dynamics.
 
@@ -242,7 +247,7 @@ $
   )
 $
 
-The parameters $rho$, $sigma$, and $beta$ are constants, while $x(t)$, $y(t)$, and $z(t)$ are time-dependent state variables. Sensitivity to initial conditions makes long-term prediction infeasible. Although the system is deterministic, small numerical errors are amplified exponentially, so trajectories eventually diverge from the true continuation. Another key property is boundedness. Although trajectories are chaotic and sensitive, they do not diverge to infinity; instead, they remain confined to the butterfly-shaped Lorenz attractor, shown in Fig. 5.
+The parameters $rho$, $sigma$, and $beta$ are constants, while $x(t)$, $y(t)$, and $z(t)$ are time-dependent state variables. Sensitivity to initial conditions makes long-term prediction infeasible. Although the system is deterministic, small numerical errors are amplified exponentially, so trajectories eventually diverge from the true continuation. Another key property is boundedness. Although trajectories are chaotic and sensitive, they do not diverge to infinity; instead, they remain confined to the butterfly-shaped Lorenz attractor, shown in Fig. 7.
 
 #figure(
   image("img/lorenz_xy.png", width: 100%),
@@ -255,7 +260,7 @@ This makes the system useful for reservoir computing: beyond short-term accuracy
 
 We now outline the implementation strategy. The project has two phases. First, we built and validated the predictive pipeline with standard Gaussian random networks. After confirming that the baseline could model the Lorenz attractor in a controlled setting, we replaced the random Gaussian networks with empirical human connectome data to test the same task on a brain-derived topology.
 
-In reservoir computing, the internal network is fixed. Training therefore consists of driving the reservoir with data, recording the resulting states, and fitting only the linear readout.
+As discusssed before, in reservoir computing the internal network is fixed. Training therefore consists of driving the reservoir with data, recording the resulting states, and fitting only the linear readout.
 
 We collect these states using *teacher forcing*: during training, the reservoir is driven by the true Lorenz signal rather than by its own predictions. At each time step, all neuron activations are stored in a state matrix $R$. The first $200$ time steps are discarded as washout, because they mostly reflect the transient caused by zero-state initialization. After this removal, $R$ contains reservoir activity synchronized with the Lorenz dynamics.
 
@@ -270,28 +275,28 @@ where $lambda$ penalizes large weights and helps prevent overfitting to noise or
 We also augment $R$ with a constant bias row of ones. This gives the readout an intercept term, allowing it to learn constant offsets in the output coordinates instead of forcing every prediction to pass through the origin.
 
 
-= Tests and results
+= Experimental results
 
 In the final stage of the project, we compared the different reservoir variants on the same Lorenz prediction task. In each case, the reservoir was first driven by the true Lorenz signal using teacher forcing. After training the linear readout, the model was then run autonomously, meaning that its own predicted output was fed back as the next input. For all models, $t_"thermalization" = 50.0$, $t_"training" = 2000.0$, and $t_"prediction" = 10.0$.
 
 
-Because the Lorenz system is chaotic, exact trajectory matching is not expected over long horizons, but we hope for short term accurate predicitons and a feasible attractor geometry even after divergence.
+Because the Lorenz system is chaotic, exact trajectory matching is not expected over long horizons, but we hope for short term accurate predicitons and a feasible attractor geometry even after divergence. Divergence time is used to quantify short-term prediction accuracy. It is defined as the time at which the Euclidean distance between the predicted and true Lorenz states exceeds a threshold $epsilon = 4.0$. This threshold was chosen to be large enough to avoid false positives from small fluctuations, but small enough to detect when the model has lost track of the true trajectory.
 
 == Gaussian reservoir baseline
 
-The Gaussian reservoir was used as a reference model because its recurrent matrix is dense and randomly generated, rather than based on brain connectivity. In our baseline run, the reservoir used $N = 300$ neurons, target spectral radius $J = 0.9$, input scaling $0.3$,ridge parameter $lambda = 3e-3$, and a leak parameter $alpha = 0.1$. These parameters were chosen as they seemd to result in the longest prediction window. 
+The Gaussian reservoir was used as a reference model because its recurrent matrix is dense and randomly generated, rather than based on brain connectivity. In our baseline run, the reservoir used $N = 300$ neurons, target spectral radius $J = 0.9$, input scaling $0.3$, ridge parameter $lambda = 3e-3$, and a leak parameter $alpha = 0.1$. These parameters were chosen as they seemd to result in the longest prediction window. 
 
 #figure(
   grid(
     columns: (1fr, 1fr),
     gutter: 1em,
 
-    image("img/gaussian_report_1d.png", width: 100%), image("img/gaussian_report_3d.png", width: 100%),
+    image("img/gauss_tdiv.png", width: 150%), image("img/gaussian_report_3d.png", width: 120%),
   ),
   caption: [Gaussian reservoir prediction: components and 3D attractor.],
 )
 
-As seen in figure 8, the Gaussian reservoir initially tracks the Lorenz signal well, and even after divergece, the 3D attractor shows that the model remains bounded and roughly resembles the Lorenz attractor, but it does not reproduce the exact lobe-switching behavior.
+As seen in figure 8, the Gaussian reservoir initially tracks the Lorenz signal well, with a divergence time of about 2.66s. Even after divergece, the 3D attractor shows that the model remains bounded and roughly resembles the Lorenz attractor, but it does not reproduce the exact lobe-switching behavior.
 
 This step shows that the basic reservoir computing pipeline is working as intended. The model can learn to predict the next step of a chaotic signal and produce bounded dynamics that resemble the true attractor, even though exact trajectory matching is lost after a short time.
 
@@ -304,12 +309,12 @@ We now replace the Gaussian recurrent matrix with the weighted adjacency matrix 
     columns: (1fr, 1fr),
     gutter: 1em,
 
-    image("img/human_report_1d.png", width: 100%), image("img/human_report_3d.png", width: 100%),
+    image("img/human_tdiv.png", width: 150%), image("img/human_report_3d.png", width: 110%),
   ),
   caption: [Connectome reservoir prediction: components and 3D attractor.],
 )
 
-Once again, from figure 9 we can see that the model initially tracks the true Lorenz signal, but diverges after a short time. The 3D trajectory remains bounded, but the model does not reproduce the exact butterfyly like shape of the attarctor. Comparing these results to the Gaussian baseline, the connectome reservoir seems to produce less accurate short-term predictions and a less faithful attractor geometry. The model diverges more quickly and does not capture the lobe-switching behavior as well.
+Once again, from figure 9 we can see that the model initially tracks the true Lorenz signal, but diverges after a time of just 0.65s. The 3D trajectory remains bounded, but the model does not reproduce the exact butterfly like shape of the attractor. Comparing these results to the Gaussian baseline, the connectome reservoir seems to produce less accurate short-term predictions and a less faithful attractor geometry.
 
 #figure(
   image("img/comparison_report.png", width: 100%),
@@ -339,8 +344,10 @@ Edge swapping produces little visible change in the plotted range. For this task
 
 Overall, the experiments show that both Gaussian and connectome-based reservoirs can produce bounded Lorenz-like trajectories, but neither gives reliable long-horizon prediction with the tested hyperparameters. This is consistent with the chaotic nature of the Lorenz system. Once the model is run autonomously, small readout errors are repeatedly fed back into the reservoir and are quickly amplified.
 
-The connectome result is still interesting because it shows that a fixed anatomical graph can function as a reservoir and generate nontrivial dynamics without training its internal weights. However, the task also makes clear that biological structure alone does not guarantee accurate prediction of an artificial chaotic signal, worse yet, it seems to perform worse than a Gaussian reservoir with the same hyperparameters. This suggests that the connectome's fixed topology may limit its ability to capture the complex dynamics of the Lorenz system compared to a random reservoir that can more easily produce rich internal representations.
+The connectome result is still interesting because it shows that a fixed anatomical graph can function as a reservoir and generate nontrivial dynamics without training its internal weights. However, the task also makes clear that biological structure alone does not guarantee accurate prediction of an artificial chaotic signal, worse yet, it seems to underperform the standard Gaussian reservoir with similar hyperparameters. This suggests that the connectome's fixed topology may limit its ability to capture the complex dynamics of the Lorenz system compared to a random reservoir that can more easily produce rich internal representations.
 
-The perturbation experiments give the clearest conclusion. Removing nodes is much more harmful than removing or rewiring edges because it directly reduces the number of reservoir states available to the readout. Edge deletion and edge swapping have weaker effects, suggesting the reservoirs internal structure is not optimsided for these kind of predicitons.
+The perturbation experiments give the clearest conclusion. Removing nodes is much more harmful than removing or rewiring edges because it directly reduces the number of reservoir states available to the readout. Edge deletion and edge swapping have weaker effects, suggesting the reservoirs internal structure is not optimized for these kind of predicitons.
 
-This does not imply that the brain is not optimized for computation, more likely our training task is not an accurate representation of how the brain actually works, and it too surface level to actually discover any biologically advantageous properties of the brains anatomical structure. 
+This does not imply that the brain is not optimized for computation, more likely our training task is not an accurate representation of how the brain actually works, and is too surface level to actually discover any biologically advantageous properties of the brains anatomical structure. 
+
+A further study would perform a more detailed hypermaparemter sweep, and potentaily test different connectome reservoirs on different classes of lorentz systems to see if any of them are better suited to the task. The perturbation experiments could also be performed after the training phase, to see how the trained readout weights are affected by structural damage, which would be more biologically relevant. Finally, a more detailed analysis of the connectome's graph structure could reveal whether certain motifs or subgraphs are particularly important for reservoir computation.

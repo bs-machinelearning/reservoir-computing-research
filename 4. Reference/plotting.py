@@ -63,20 +63,54 @@ def plot_lorenz_3d(R, W_out, y_true):
     ax.legend()
     plt.show()
     
-def plot_lorenz_components(Y_pred, Y_true, dt=0.01, labels=("x", "y", "z")):
+def plot_lorenz_components(Y_pred, Y_true, dt=0.01, labels=("x", "y", "z"), epsilon=4.0):
+    """Plot Lorenz components and optionally mark divergence time."""
+    
     t = np.arange(len(Y_pred)) * dt
-    fig, axes = plt.subplots(3, 1, figsize=(10, 7), sharex=True)
+
+    # constrained_layout handles spacing better than tight_layout here
+    fig, axes = plt.subplots(
+        3, 1,
+        figsize=(10, 7),
+        sharex=True,
+        constrained_layout=True
+    )
+
+    # divergence time
+    t_div = None
+    divergence_text = ""
+
+    if epsilon is not None:
+        distances = np.linalg.norm(Y_pred - Y_true, axis=1)
+        exceeds = np.where(distances > epsilon)[0]
+
+        if len(exceeds) > 0:
+            t_div = exceeds[0] * dt
+            divergence_text = f"divergence time: t = {t_div:.2f}s"
+        else:
+            divergence_text = "no divergence"
 
     for i, ax in enumerate(axes):
         ax.plot(t, Y_true[:, i], label=f"true {labels[i]}", lw=1.5)
         ax.plot(t, Y_pred[:, i], "--", label=f"pred {labels[i]}", lw=1.2)
+
+        if t_div is not None:
+            ax.axvline(t_div, color="red", linestyle=":", lw=1.5)
+
         ax.set_ylabel(labels[i])
-        ax.legend()
+        ax.legend(loc="upper left")
 
     axes[-1].set_xlabel("t")
-    fig.suptitle("Lorenz components: true vs predicted")
-    plt.tight_layout()
+
+    title = "Lorenz components: true vs predicted"
+    if divergence_text:
+        title += f"\n{divergence_text}"
+
+    fig.suptitle(title)
+
     plt.show()
+
+    return t_div
     
 def plot_lorenz_3d_pred_vs_true(Y_pred, Y_true):
     fig = plt.figure()
